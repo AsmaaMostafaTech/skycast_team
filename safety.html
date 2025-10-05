@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safety Alerts - SkyCast</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        #safetyMap {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+            padding: 10px 20px;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+        .emergency-contact {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .safety-tip {
+            background: #fff8e1;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 15px;
+            border-radius: 0 4px 4px 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg bg-light shadow-sm">
+        <div class="container d-flex justify-content-between align-items-center">
+            <!-- Logo -->
+            <a class="navbar-brand d-flex align-items-center" href="index.html">
+                <img src="logo.png" alt="Logo" class="img-fluid rounded-circle" style="max-height: 60px;">
+                <span class="fw-bold">SkyCast</span>
+            </a>
+
+            <!-- Back to Home Button -->
+            <div>
+                <a href="index.html" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-right me-1"></i>Back to Home
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row">
+            <!-- Left Column -->
+            <div class="col-lg-8">
+                <!-- Map Section -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-map-marker-alt me-2"></i>Your Location
+                    </div>
+                    <div class="card-body">
+                        <div id="safetyMap"></div>
+                        <div class="text-muted small mt-2">Locating your position...</div>
+                        <div class="mt-3">
+                            <button id="getLocationBtn" class="btn btn-outline-primary me-2">
+                                <i class="fas fa-location-arrow me-1"></i> Use My Current Location
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>Report Emergency
+                    </div>
+                    <div class="card-body">
+                        <form id="emergencyForm">
+                            <div class="mb-3">
+                                <label for="fullName" class="form-label">Your Name (Optional)</label>
+                                <input type="text" class="form-control" id="fullName" placeholder="Enter your name">
+                            </div>
+                            <div class="mb-3">
+                                <label for="phoneNumber" class="form-label">Phone Number (Optional)</label>
+                                <input type="tel" class="form-control" id="phoneNumber" placeholder="Enter your phone number">
+                            </div>
+                            <div class="mb-3">
+                                <label for="emergencyType" class="form-label">Type of Emergency</label>
+                                <select class="form-select" id="emergencyType">
+                                    <option value="" selected disabled>Select weather emergency</option>
+                                    <option value="thunderstorm">⚡ Thunderstorm / Lightning</option>
+                                    <option value="flood">🌧️ Heavy Rain / Flooding</option>
+                                    <option value="heat">🔥 Extreme Heat</option>
+                                    <option value="sandstorm">🌪️ Sandstorm / Dust Storm</option>
+                                    <option value="cold">❄️ Extreme Cold</option>
+                                    <option value="wind">💨 High Winds</option>
+                                    <option value="other">⚠️ Other Emergency</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="emergencyDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="emergencyDescription" rows="3" placeholder="Please describe the situation..."></textarea>
+                                <div class="form-text">Maximum 500 characters</div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Type of Assistance Needed</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="shelter" id="needShelter">
+                                    <label class="form-check-label" for="needShelter">
+                                        🏠 Need Shelter
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="medical" id="needMedical">
+                                    <label class="form-check-label" for="needMedical">
+                                        🚑 Medical Assistance
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="rescue" id="needRescue">
+                                    <label class="form-check-label" for="needRescue">
+                                        🆘 Emergency Rescue
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="other" id="needOther">
+                                    <label class="form-check-label" for="needOther">
+                                        ❓ Other Assistance
+                                    </label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-paper-plane me-2"></i>Send Emergency Alert
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="col-lg-4">
+                <!-- Safety Tips -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>Safety Tips
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center py-3">
+                            <i class="fas fa-shield-alt text-muted fa-2x mb-3"></i>
+                            <h5>Stay Safe</h5>
+                            <p class="text-muted">Select a weather emergency to see specific safety tips for your situation.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Emergency Contacts -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-phone-alt text-danger me-2"></i>Emergency Contacts
+                    </div>
+                    <div class="card-body">
+                        <div class="emergency-contact">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-ambulance text-danger me-2"></i>
+                                    <strong>Emergency Services</strong>
+                                </div>
+                                <a href="tel:911" class="btn btn-sm btn-outline-danger">911</a>
+                            </div>
+                        </div>
+                        <div class="emergency-contact">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-shield-alt text-primary me-2"></i>
+                                    <strong>Civil Defense</strong>
+                                </div>
+                                <a href="tel:998" class="btn btn-sm btn-outline-primary">998</a>
+                            </div>
+                        </div>
+                        <div class="emergency-contact">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-hospital text-success me-2"></i>
+                                    <strong>Ministry of Health</strong>
+                                </div>
+                                <a href="tel:937" class="btn btn-sm btn-outline-success">937</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weather Alerts -->
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fas fa-bell text-info me-2"></i>Active Alerts
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="fas fa-check-circle text-success fa-2x mb-2"></i>
+                        <p class="mb-0">No active weather alerts in your area</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-shield-alt me-2"></i>SkyCast Safety Alerts</h5>
+                    <p class="mb-0">Your safety is our priority. Stay informed and protected with real-time weather alerts.</p>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    <p class="mb-0">&copy; 2023 SkyCast. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Required Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize the map
+        const map = L.map('safetyMap').setView([24.7136, 46.6753], 13); // Default to Riyadh
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Add a marker
+        const marker = L.marker([24.7136, 46.6753], {
+            draggable: true,
+            autoPan: true
+        }).addTo(map);
+        
+        // Update location when marker is dragged
+        marker.on('dragend', function() {
+            const latlng = marker.getLatLng();
+            console.log('Marker moved to:', latlng.lat, latlng.lng);
+            // You can add code here to update the displayed coordinates or perform other actions
+        });
+        
+        // Get user's current location
+        document.getElementById('getLocationBtn').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    // Update map view
+                    map.setView([lat, lng], 15);
+                    
+                    // Update marker position
+                    marker.setLatLng([lat, lng]);
+                    
+                    // Update location text
+                    document.querySelector('.text-muted.small').textContent = 'Location updated';
+                    
+                    // You can add reverse geocoding here to get the address
+                }, function(error) {
+                    console.error('Error getting location:', error);
+                    alert('Unable to retrieve your location. Please enable location services and try again.');
+                });
+            } else {
+                alert('Geolocation is not supported by your browser.');
+            }
+        });
+        
+        // Form submission
+        document.getElementById('emergencyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const formData = {
+                name: document.getElementById('fullName').value,
+                phone: document.getElementById('phoneNumber').value,
+                emergencyType: document.getElementById('emergencyType').value,
+                description: document.getElementById('emergencyDescription').value,
+                assistance: []
+            };
+            
+            // Get checked assistance options
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                formData.assistance.push(checkbox.value);
+            });
+            
+            console.log('Form submitted:', formData);
+            alert('Emergency alert has been sent. Help is on the way!');
+            
+            // Reset form
+            this.reset();
+        });
+        
+        // Update safety tips based on emergency type
+        document.getElementById('emergencyType').addEventListener('change', function() {
+            const tipsContainer = document.querySelector('.card-body > .text-center');
+            const type = this.value;
+            let tips = '';
+            
+            switch(type) {
+                case 'thunderstorm':
+                    tips = `
+                        <i class="fas fa-bolt text-warning fa-2x mb-3"></i>
+                        <h5>Thunderstorm Safety</h5>
+                        <ul class="text-start">
+                            <li>Stay indoors and away from windows</li>
+                            <li>Avoid using electrical equipment</li>
+                            <li>Stay away from water sources</li>
+                            <li>If outside, find a low-lying area</li>
+                        </ul>
+                    `;
+                    break;
+                case 'flood':
+                    tips = `
+                        <i class="fas fa-water text-primary fa-2x mb-3"></i>
+                        <h5>Flood Safety</h5>
+                        <ul class="text-start">
+                            <li>Avoid walking or driving through floodwaters</li>
+                            <li>Move to higher ground</li>
+                            <li>Stay away from downed power lines</li>
+                            <li>Follow evacuation orders</li>
+                        </ul>
+                    `;
+                    break;
+                case 'heat':
+                    tips = `
+                        <i class="fas fa-sun text-danger fa-2x mb-3"></i>
+                        <h5>Extreme Heat Safety</h5>
+                        <ul class="text-start">
+                            <li>Stay hydrated with water</li>
+                            <li>Avoid direct sunlight</li>
+                            <li>Wear lightweight clothing</li>
+                            <li>Check on vulnerable individuals</li>
+                        </ul>
+                    `;
+                    break;
+                case 'sandstorm':
+                    tips = `
+                        <i class="fas fa-wind text-warning fa-2x mb-3"></i>
+                        <h5>Sandstorm Safety</h5>
+                        <ul class="text-start">
+                            <li>Stay indoors with windows and doors closed</li>
+                            <li>Wear a mask if going outside</li>
+                            <li>Protect your eyes with goggles</li>
+                            <li>Cover your nose and mouth</li>
+                        </ul>
+                    `;
+                    break;
+                default:
+                    tips = `
+                        <i class="fas fa-shield-alt text-muted fa-2x mb-3"></i>
+                        <h5>Stay Safe</h5>
+                        <p class="text-muted">Select a weather emergency to see specific safety tips for your situation.</p>
+                    `;
+            }
+            
+            tipsContainer.innerHTML = tips;
+        });
+    </script>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chatbase Script -->
+    <script>
+    (function(){if(!window.chatbase||window.chatbase("getState")!=="initialized"){window.chatbase=(...arguments)=>{if(!window.chatbase.q){window.chatbase.q=[]}window.chatbase.q.push(arguments)};window.chatbase=new Proxy(window.chatbase,{get(target,prop){if(prop==="q"){return target.q}return(...args)=>target(prop,...args)}})}const onLoad=function(){const script=document.createElement("script");script.src="https://www.chatbase.co/embed.min.js";script.id="CvIhE5ytw-A_7KiTqA5aH";script.domain="www.chatbase.co";document.body.appendChild(script)};if(document.readyState==="complete"){onLoad()}else{window.addEventListener("load",onLoad)}})();
+    </script>
+</body>
+</html>
